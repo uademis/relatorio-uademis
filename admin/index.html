@@ -172,6 +172,9 @@ dialog.det::backdrop{background:rgba(5,13,22,.6)}
 .dlg-h .acoes{display:flex;gap:8px;flex:0 0 auto}
 .dlg-h .btn{padding:9px 14px;font-size:.88rem}
 .dlg-h .x{background:rgba(255,255,255,.14);color:#fff}
+.dlg-h .excluir{background:transparent;color:#FFB4B4;border:1.5px solid rgba(255,140,140,.55)}
+.dlg-h .excluir:hover{background:var(--err);color:#fff;border-color:var(--err)}
+@media (max-width:520px){.dlg-h{flex-wrap:wrap}.dlg-h .acoes{width:100%;justify-content:flex-end}}
 .dlg-c{padding:18px}
 .dlg-c section.bloco{padding:16px}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
@@ -520,6 +523,7 @@ function ligarLista(box, obter, opcoes) {
 
 /* ---------- Janela com o relatório completo ---------- */
 let detalheAberto = null;
+let aoExcluirAtual = null;
 function janelaDetalhe() {
   let d = $('#dlgDet');
   if (d) return d;
@@ -529,6 +533,7 @@ function janelaDetalhe() {
     <div class="dlg-h">
       <div><h2 id="dlgTitulo"></h2><small id="dlgSub"></small></div>
       <div class="acoes">
+        <button type="button" class="btn excluir" id="dlgExcluir" hidden>Excluir</button>
         <button type="button" class="btn light" id="dlgImprimir">Imprimir</button>
         <button type="button" class="btn x" id="dlgFechar" aria-label="Fechar">✕</button>
       </div>
@@ -538,13 +543,16 @@ function janelaDetalhe() {
   $('#dlgFechar', d).addEventListener('click', () => d.close());
   d.addEventListener('click', e => { if (e.target === d) d.close(); });
   $('#dlgImprimir', d).addEventListener('click', () => { d.close(); imprimir(detalheAberto); });
+  $('#dlgExcluir', d).addEventListener('click', () => excluirRelatorio(detalheAberto));
   return d;
 }
 
-function abrirDetalhe(r, { email = false } = {}) {
+function abrirDetalhe(r, { email = false, aoExcluir = null } = {}) {
   if (!r) return;
   detalheAberto = r;
+  aoExcluirAtual = aoExcluir;
   const d = janelaDetalhe();
+  $('#dlgExcluir', d).hidden = !aoExcluir || !r.id;
   const kv = (rot, val, cls = '') => `<div class="${cls}"><span>${rot}</span><b>${esc(val) || '—'}</b></div>`;
   $('#dlgTitulo').textContent = `${r.setor} · ${nomeMes(r.mes)} ${r.ano}`;
   $('#dlgSub').textContent = [r.enviado ? 'Enviado em ' + r.enviado : '', email && r.email ? 'por ' + r.email : ''].filter(Boolean).join(' ');
@@ -583,6 +591,25 @@ function abrirDetalhe(r, { email = false } = {}) {
     </section>`;
   d.showModal();
   d.scrollTop = 0;
+}
+
+async function excluirRelatorio(r) {
+  if (!r || !r.id) return;
+  const texto = `Excluir o relatório de ${r.setor} · ${nomeMes(r.mes)} ${r.ano}?\n\n` +
+    `Ele sai do site e dos totais. (Fica guardado na lixeira da planilha.)`;
+  if (!confirm(texto)) return;
+  const btn = $('#dlgExcluir');
+  btn.disabled = true; btn.textContent = 'Excluindo…';
+  try {
+    await api('excluir', { id: r.id });
+    $('#dlgDet').close();
+    toast('Relatório excluído.');
+    if (aoExcluirAtual) aoExcluirAtual(r);
+  } catch (e) {
+    toast('Não foi possível excluir: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Excluir';
+  }
 }
 
 /* ---------- Impressão (layout do formulário original) ---------- */
@@ -766,7 +793,10 @@ $('#btnAtualizar').addEventListener('click', carregar);
 ['#fAno', '#fMes', '#fSetor'].forEach(s => $(s).addEventListener('change', render));
 $('#fBusca').addEventListener('input', render);
 $('#btnImprimirTodos').addEventListener('click', () => filtrados.length && imprimir(filtrados));
-ligarLista($('#relLista'), i => filtrados[i], { email: true });
+ligarLista($('#relLista'), i => filtrados[i], {
+  email: true,
+  aoExcluir: r => { todos = todos.filter(x => x.id !== r.id); montarFiltros(); render(); }
+});
 
 iniciarLogin(u => {
   $('#telaApp').hidden = false;
