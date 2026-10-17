@@ -355,6 +355,53 @@ main.wrap{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .kpis .tot.din b{font-size:1.28rem;padding:.2em 0 .15em}
 @media (max-width:520px){.kpis{grid-template-columns:1fr 1fr}}
 
+/* ---------- Filtro de vários setores ---------- */
+.multi{position:relative;flex:1 1 200px;min-width:0}
+.multi-btn{width:100%;text-align:left;font:inherit;font-size:16px;color:var(--ink);background:#FBFAF7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235E6878' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border:1.5px solid var(--line);border-radius:10px;padding:11px 34px 11px 12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.multi-btn.ativo{border-color:var(--accent);background-color:var(--accent-soft);font-weight:700}
+.multi-pop{position:absolute;z-index:20;top:calc(100% + 6px);left:0;right:0;min-width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(11,34,54,.18);padding:8px}
+.multi-acoes{display:flex;gap:6px;padding:2px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.multi-acoes button{flex:1;border:0;background:var(--accent-soft);color:var(--brand);font:inherit;font-size:.84rem;font-weight:700;border-radius:8px;padding:8px;cursor:pointer}
+.multi-lista{max-height:300px;overflow-y:auto}
+.multi-grupo{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--accent-ink);padding:10px 8px 4px}
+.multi-item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:8px;cursor:pointer;font-size:.92rem}
+.multi-item:hover{background:#F4F7FA}
+.multi-item input{width:18px;height:18px;flex:0 0 auto;accent-color:var(--brand)}
+.multi-item small{color:var(--muted)}
+.escopo{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 14px}
+.escopo span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.82rem;color:var(--muted)}
+.escopo b{color:var(--ink);font-weight:700}
+table.t tr.total td{font-weight:800;border-top:2px solid var(--line);background:#FAF8F3}
+
+/* ---------- Cadastro por região ---------- */
+.linha-add select{flex:0 1 220px;width:auto}
+.grupo-reg .rel-topo{margin-bottom:4px}
+.item select.mover{width:auto;flex:0 0 auto;max-width:180px;padding:8px 10px;font-size:.88rem}
+.btn.remover{background:transparent;color:var(--err);border:1.5px solid #F0C9C9;padding:9px 12px;font-size:.86rem}
+.btn.remover:hover{background:#FBE9E9}
+@media (max-width:640px){
+  .item{flex-wrap:wrap}
+  .item .nome{flex-basis:100%}
+  .item select.mover{flex:1;max-width:none}
+  .linha-add select{flex:1 1 100%}
+  .multi{flex-basis:100%}
+}
+
+/* ---------- Impressão do resumo consolidado ---------- */
+@media print{
+  .p-tab{width:100%;border-collapse:collapse;font-size:9.5pt}
+  .p-tab th,.p-tab td{border:1px solid #999;padding:3px 5px;text-align:left}
+  .p-tab th{background:#F0F0F0}
+  .p-tab td.r{text-align:right}
+}
+@media (min-width:641px){
+  .filtros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .filtros select,.filtros .multi{width:100%;min-width:0}
+  .filtros #fBusca{grid-column:1 / span 3;width:100%}
+  .filtros .btn{width:100%}
+}
+
 </style>
 </head>
 <body>
@@ -438,8 +485,11 @@ const GOOGLE_CLIENT_ID = '832203353738-clh89thu7fu395oqlcoc1gemd8mdafmi.apps.goo
         <section class="bloco">
           <h2><span class="num">1</span> Identificação</h2>
           <div class="grid">
+            <label class="f">Região
+              <select name="regiao" required><option value="">Escolha a região</option></select>
+            </label>
             <label class="f">Setor
-              <select name="setor" required><option value="">Escolha o setor</option></select>
+              <select name="setor" required disabled><option value="">Escolha a região primeiro</option></select>
             </label>
             <label class="f">Departamento
               <input name="departamento" value="Uademis – Adolescentes" readonly tabindex="-1">
@@ -775,7 +825,7 @@ async function api(acao, extra = {}) {
 function deSheet(r) {
   const d = {
     id: r.ID_Relatorio, enviado: r.Data_Envio, email: r.Email_Envio || '', conta: r.Nome_Conta || '',
-    setor: r.Setor, mes: r.Mes, ano: n(r.Ano), contribuicao: valorNum(r.Contribuicao_Mensal), lider: r.Lider_Responsavel, cargo: r.Cargo_Funcao, resumo: r.Resumo_Geral,
+    setor: r.Setor, regiao: r.Regiao || '', mes: r.Mes, ano: n(r.Ano), contribuicao: valorNum(r.Contribuicao_Mensal), lider: r.Lider_Responsavel, cargo: r.Cargo_Funcao, resumo: r.Resumo_Geral,
     atividades: (r.atividades || []).map(a => ({
       nome: a.Nome_Atividade, data: a.Data, tipo: a.Tipo_Atividade, tipoOutro: a.Tipo_Outro, local: a.Local,
       pregacao: a.Houve_Pregacao, pregador: a.Pregador, tema: a.Tema_Pregacao,
@@ -863,7 +913,7 @@ function abrirDetalhe(r, { email = false, aoExcluir = null } = {}) {
   $('#dlgSub').textContent = [r.enviado ? 'Enviado em ' + r.enviado : '', email && r.email ? 'por ' + r.email : ''].filter(Boolean).join(' ');
   $('#dlgCorpo').innerHTML = `
     <section class="bloco"><h2><span class="num">1</span> Identificação</h2>
-      <div class="kv">${kv('Setor', r.setor)}${kv('Departamento', 'Uademis – Adolescentes')}${kv('Mês/Ano', `${r.mes} / ${r.ano}`)}${kv('Líder responsável', r.lider)}${kv('Cargo/Função', r.cargo, 'w')}</div>
+      <div class="kv">${kv('Região', r.regiao)}${kv('Setor', r.setor)}${kv('Departamento', 'Uademis – Adolescentes')}${kv('Mês/Ano', `${r.mes} / ${r.ano}`)}${kv('Líder responsável', r.lider)}${kv('Cargo/Função', r.cargo, 'w')}</div>
     </section>
     <section class="bloco"><h2><span class="num">2</span> Resumo geral do mês</h2>
       <p class="resumo">${esc(r.resumo) || '<span style="color:var(--muted)">Sem resumo.</span>'}</p>
@@ -928,7 +978,8 @@ function htmlImpressao(d) {
   return `<div class="p-rel">
     <div class="p-h"><img src="${LOGO}" alt=""><div><h1>RELATÓRIO MENSAL DE ATIVIDADES</h1><p>DEPARTAMENTO UADEMIS – ADOLESCENTES</p></div></div>
     <div class="p-s"><h2>1. IDENTIFICAÇÃO</h2><div class="p-l">
-      ${linha('Setor', d.setor)}${linha('Departamento', 'Uademis – Adolescentes')}
+      ${linha('Região', d.regiao && d.regiao !== '__sem' ? d.regiao : '—')}${linha('Setor', d.setor)}
+      ${linha('Departamento', 'Uademis – Adolescentes', 'w')}
       ${linha('Mês/Ano', `${d.mes} / ${d.ano}`)}${linha('Líder Responsável', d.lider)}
       ${linha('Cargo/Função', d.cargo, 'w')}
     </div></div>
@@ -1051,7 +1102,8 @@ function atualizar(salvar = true) {
 function coletar() {
   const fd = new FormData(form);
   return {
-    setor: (fd.get('setor') || '').trim(),
+    regiao: form.regiao.value,
+    setor: (form.setor.value || '').trim(),
     departamento: 'Uademis – Adolescentes',
     mes: fd.get('mes'),
     ano: n(fd.get('ano')),
@@ -1097,7 +1149,7 @@ function mascaraValor(e) {
 }
 
 function preencher(d) {
-  form.setor.value = d.setor || '';
+  definirSetor(d.setor, d.regiao);
   form.mes.value = d.mes || MESES[new Date().getMonth()];
   form.ano.value = d.ano || new Date().getFullYear();
   form.lider.value = d.lider || '';
@@ -1209,6 +1261,7 @@ function abrirAba(nome) {
 form.mes.innerHTML = MESES.map((m, i) => `<option value="${m}">${MESES_NOME[i]}</option>`).join('');
 
 form.contribuicao.addEventListener('input', mascaraValor);
+form.regiao.addEventListener('change', () => { encherSetores(form.regiao.value); salvarRascunho(); });
 form.addEventListener('input', e => { if (!e.target.closest('.atv') && e.target !== form.contribuicao) salvarRascunho(); });
 $('#addAtv').addEventListener('click', () => {
   const el = addAtividade();
@@ -1230,18 +1283,49 @@ ligarLista($('#meusLista'), i => meus[i], {
   aoExcluir: r => { meus = meus.filter(x => x.id !== r.id); renderMeus(); }
 });
 
-function montarSetores(lista) {
-  const atual = form.setor.value;
-  form.setor.innerHTML = '<option value="">' + (lista.length ? 'Escolha o setor' : 'Nenhum setor cadastrado') + '</option>' +
-    lista.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
-  form.setor.value = lista.includes(atual) ? atual : '';
-  const av = $('#avisoSetores');
-  av.hidden = lista.length > 0;
+/* ---------- Região → Setor ---------- */
+let SETORES = [];   // [{ nome, regiao }]
+let REGIOES = [];
+
+function montarSetores(regioes, setores) {
+  // aceita o formato antigo (lista de nomes) por segurança
+  SETORES = (setores || []).map(s => typeof s === 'string' ? { nome: s, regiao: '' } : s);
+  REGIOES = (regioes || []).filter(r => SETORES.some(s => s.regiao === r));
+  if (SETORES.some(s => !s.regiao)) REGIOES.push('');
+  const atualSetor = form.setor.value, atualReg = form.regiao.value;
+  form.regiao.innerHTML = '<option value="">' + (SETORES.length ? 'Escolha a região' : 'Nenhuma região com setores') + '</option>' +
+    REGIOES.map(r => `<option value="${esc(r || '__sem')}">${esc(r || 'Sem região')}</option>`).join('');
+  $('#avisoSetores').hidden = SETORES.length > 0;
+  definirSetor(atualSetor, atualReg);
+}
+
+function setoresDaRegiao(reg) {
+  const r = reg === '__sem' ? '' : reg;
+  return SETORES.filter(s => s.regiao === r);
+}
+
+function encherSetores(reg, setorEscolhido = '') {
+  const lista = reg ? setoresDaRegiao(reg) : [];
+  form.setor.disabled = !reg;
+  form.setor.innerHTML = '<option value="">' + (reg ? 'Escolha o setor' : 'Escolha a região primeiro') + '</option>' +
+    lista.map(s => `<option value="${esc(s.nome)}">${esc(s.nome)}</option>`).join('');
+  if (lista.length === 1 && !setorEscolhido) setorEscolhido = lista[0].nome;
+  form.setor.value = lista.some(s => s.nome === setorEscolhido) ? setorEscolhido : '';
+}
+
+/** Coloca região e setor no formulário (descobre a região pelo setor, se preciso). */
+function definirSetor(nome, regiao) {
+  const s = SETORES.find(x => x.nome === nome);
+  let reg = s ? (s.regiao || '__sem') : (regiao || '');
+  if (!REGIOES.includes(reg === '__sem' ? '' : reg)) reg = '';
+  if (!reg && REGIOES.length === 1) reg = REGIOES[0] || '__sem';
+  form.regiao.value = reg;
+  encherSetores(reg, s ? s.nome : '');
 }
 
 iniciarLogin((u, info) => {
   $('#telaApp').hidden = false;
-  montarSetores(info.setores || []);
+  montarSetores(info.regioes || [], info.setores || []);
   $('#grupoAdmin').hidden = !u.admin;
   const aviso = $('#avisoPermissao');
   aviso.hidden = u.podeEnviar;
